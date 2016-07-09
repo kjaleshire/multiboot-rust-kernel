@@ -63,7 +63,9 @@ pub extern fn __rust_allocate(size: usize, align: usize) -> *mut u8 {
 }
 
 #[no_mangle]
-pub extern fn __rust_deallocate(_ptr: *mut u8, _size: usize, _align: usize) {
+pub extern fn __rust_deallocate(_ptr: *mut u8, _size: usize,
+    _align: usize)
+{
 
 }
 
@@ -73,12 +75,15 @@ pub extern fn __rust_usable_size(size: usize, _align: usize) -> usize {
 }
 
 #[no_mangle]
-pub extern fn __rust_reallocate_inplace(_ptr: *mut u8, size: usize, _new_size: usize, _align: usize) -> usize {
+pub extern fn __rust_reallocate_inplace(_ptr: *mut u8, size: usize,
+    _new_size: usize, _align: usize) -> usize
+{
     size
 }
 
 #[no_mangle]
-pub extern fn __rust_reallocate(ptr: *mut u8, size: usize, new_size: usize, align: usize) -> *mut u8 {
+pub extern fn __rust_reallocate(ptr: *mut u8, size: usize, new_size: usize,
+                                align: usize) -> *mut u8 {
     use core::{ptr, cmp};
 
     let new_ptr = __rust_allocate(new_size, align);

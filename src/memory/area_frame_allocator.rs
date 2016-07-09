@@ -62,11 +62,11 @@ impl FrameAllocator for AreaFrameAllocator {
             if frame > current_area_last_frame {
                 self.choose_next_area();
             } else if frame >= self.kernel_start && frame <= self.kernel_end {
-                self.next_free_frame = Frame { number: self.kernel_end.number + 1 }
+                self.next_free_frame = Frame { number: self.kernel_end.number + 1 };
             } else if frame >= self.multiboot_start && frame <= self.multiboot_end {
-                self.next_free_frame = Frame { number: self.multiboot_end.number + 1 }
+                self.next_free_frame = Frame { number: self.multiboot_end.number + 1 };
             } else {
-                self.next_free_frame = Frame { number: self.next_free_frame.number + 1 };
+                self.next_free_frame.number += 1;
                 return Some(frame);
             }
 

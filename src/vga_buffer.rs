@@ -1,5 +1,5 @@
 use core::ptr::Unique;
-use core::fmt::Write;
+use core::fmt;
 use spin::Mutex;
 
 const BUFFER_HEIGHT: usize = 25;
@@ -11,16 +11,16 @@ pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
     buffer: unsafe { Unique::new(0xb8000 as *mut _) },
 });
 
+macro_rules! println {
+    ($fmt:expr) => (print!(concat!($fmt, "\n")));
+    ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\n"), $($arg)*));
+}
+
 macro_rules! print {
     ($($arg:tt)*) => ({
             use core::fmt::Write;
             $crate::vga_buffer::WRITER.lock().write_fmt(format_args!($($arg)*)).unwrap();
     });
-}
-
-macro_rules! println {
-    ($fmt:expr) => (print!(concat!($fmt, "\n")));
-    ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\n"), $($arg)*));
 }
 
 pub fn clear_screen() {
@@ -48,26 +48,6 @@ pub enum Color {
     Pink = 13,
     Yellow = 14,
     White = 15,
-}
-
-#[derive(Clone, Copy)]
-struct ColorCode(u8);
-
-impl ColorCode {
-    const fn new(foreground: Color, background: Color) -> ColorCode {
-        ColorCode((background as u8) << 4 | (foreground as u8))
-    }
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-struct ScreenChar {
-    ascii_character: u8,
-    color_code: ColorCode,
-}
-
-struct Buffer {
-    chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 pub struct Writer {
@@ -121,11 +101,31 @@ impl Writer {
     }
 }
 
-impl Write for Writer {
+impl fmt::Write for Writer {
     fn write_str(&mut self, s: &str) -> ::core::fmt::Result {
         for byte in s.bytes() {
             self.write_byte(byte);
         }
         Ok(())
     }
+}
+
+#[derive(Clone, Copy)]
+struct ColorCode(u8);
+
+impl ColorCode {
+    const fn new(foreground: Color, background: Color) -> ColorCode {
+        ColorCode((background as u8) << 4 | (foreground as u8))
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+struct ScreenChar {
+    ascii_character: u8,
+    color_code: ColorCode,
+}
+
+struct Buffer {
+    chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }

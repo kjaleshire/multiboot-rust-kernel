@@ -26,15 +26,15 @@ impl TemporaryPage {
         self.page.start_address()
     }
 
-    pub fn unmap(&mut self, active_table: &mut ActivePageTable) {
-        active_table.unmap(self.page, &mut self.allocator);
-    }
-
     pub fn map_table_frame(&mut self,
                            frame: Frame,
                            active_table: &mut ActivePageTable)
                            -> &mut Table<Level1> {
         unsafe { &mut *(self.map(frame, active_table) as *mut Table<Level1>) }
+    }
+
+    pub fn unmap(&mut self, active_table: &mut ActivePageTable) {
+        active_table.unmap(self.page, &mut self.allocator);
     }
 }
 
@@ -67,6 +67,6 @@ impl FrameAllocator for TinyAllocator {
                 return;
             }
         }
-        panic!("Tiny allocator can only hold 3 frames.");
+        panic!("Tiny allocator can hold only 3 frames.");
     }
 }
