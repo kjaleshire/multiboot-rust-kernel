@@ -1,8 +1,11 @@
-#![feature(alloc, collections, lang_items, const_fn, unique, step_by)]
+#![feature(alloc, asm, collections, const_fn, lang_items, naked_functions, step_by, unique)]
 #![no_std]
 
+extern crate bit_field;
 #[macro_use]
 extern crate bitflags;
+#[macro_use]
+extern crate lazy_static;
 extern crate multiboot2;
 #[macro_use]
 extern crate once;
@@ -17,8 +20,10 @@ extern crate collections;
 
 #[macro_use]
 mod vga_buffer;
+mod interrupts;
 mod memory;
 
+#[naked]
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // Be careful, there is only a tiny stack and no guard page
@@ -31,6 +36,8 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     enable_write_protect_bit();
 
     memory::init(boot_info);
+
+    interrupts::init();
 
     use alloc::boxed::Box;
     let mut heap_test = Box::new(42);
@@ -48,6 +55,8 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     for i in 0..10000 {
         format!("Some String");
     }
+
+    println!("{:?}", divide_by_zero());
 
     println!("SUCCESS!");
     loop {}
@@ -67,6 +76,12 @@ fn enable_write_protect_bit() {
     use x86::controlregs::{cr0, cr0_write};
     let wp_bit = 1 << 16;
     unsafe { cr0_write(cr0() | wp_bit) };
+}
+
+fn divide_by_zero() {
+    unsafe {
+        asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel");
+    }
 }
 
 #[cfg(not(test))]
