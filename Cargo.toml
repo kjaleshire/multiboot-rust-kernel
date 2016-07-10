@@ -10,8 +10,8 @@ once = "0.3.2"
 rlibc = "0.1.4"
 spin = "0.3.4"
 
-[dependencies.bump_allocator]
-path = "libs/bump_allocator"
+[dependencies.hole_list_allocator]
+path = "libs/hole_list_allocator"
 
 [dependencies.multiboot2]
 git = "https://github.com/phil-opp/multiboot2-elf64"
