@@ -1,0 +1,1 @@
+{"rustc":7842857892264987317,"target":12691740226220862712,"profile":16265671326729535699,"local":{"variant":"Precalculated","fields":["0.4.3"]},"features":"Some([\"asm\", \"const_fn\", \"core_intrinsics\", \"default\", \"once\", \"unstable\"])","deps":[],"rustflags":[]}

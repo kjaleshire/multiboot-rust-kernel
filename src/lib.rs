@@ -52,7 +52,7 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
         print!("{} ", i);
     }
 
-    for i in 0..10000 {
+    for _ in 0..10000 {
         format!("Some String");
     }
 

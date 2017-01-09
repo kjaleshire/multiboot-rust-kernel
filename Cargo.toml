@@ -4,7 +4,7 @@ name = "blog_os"
 version = "0.0.1"
 
 [dependencies]
-bit_field = "0.2.1"
+bit_field = "0.1.0"
 bitflags = "0.7.0"
 lazy_static = "0.2.1"
 once = "0.3.2"
@@ -19,12 +19,12 @@ git = "https://github.com/phil-opp/multiboot2-elf64"
 
 [dependencies.x86]
 default-features = false
-version = "0.7.0"
+version = "0.7.1"
 
 [lib]
 crate-type = ["staticlib"]
 
-[profile]
+[workspace]
 
 [profile.dev]
 panic = "abort"
