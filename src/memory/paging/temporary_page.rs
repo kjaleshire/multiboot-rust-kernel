@@ -16,8 +16,11 @@ impl TemporaryPage {
             allocator: TinyAllocator::new(allocator),
         }
     }
-
-    pub fn map(&mut self, frame: Frame, active_table: &mut ActivePageTable) -> VirtualAddress {
+    /// Maps the temporary page to the given frame in the active table.
+    /// Returns the start address of the temporary page.
+    pub fn map(&mut self, frame: Frame, active_table: &mut ActivePageTable)
+        -> VirtualAddress
+    {
         use super::entry::WRITABLE;
 
         assert!(active_table.translate_page(self.page).is_none(),
@@ -26,15 +29,16 @@ impl TemporaryPage {
         self.page.start_address()
     }
 
-    pub fn map_table_frame(&mut self,
-                           frame: Frame,
-                           active_table: &mut ActivePageTable)
-                           -> &mut Table<Level1> {
-        unsafe { &mut *(self.map(frame, active_table) as *mut Table<Level1>) }
-    }
-
+    /// Unmaps the temporary page in the active table.
     pub fn unmap(&mut self, active_table: &mut ActivePageTable) {
         active_table.unmap(self.page, &mut self.allocator);
+    }
+
+    pub fn map_table_frame(&mut self,
+                        frame: Frame,
+                        active_table: &mut ActivePageTable)
+                        -> &mut Table<Level1> {
+        unsafe { &mut *(self.map(frame, active_table) as *mut Table<Level1>) }
     }
 }
 

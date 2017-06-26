@@ -1,5 +1,6 @@
-use memory::Frame;
 use multiboot2::ElfSection;
+
+use memory::Frame; // needed later
 
 pub struct Entry(u64);
 
@@ -18,7 +19,9 @@ impl Entry {
 
     pub fn pointed_frame(&self) -> Option<Frame> {
         if self.flags().contains(PRESENT) {
-            Some(Frame::containing_address(self.0 as usize & 0x000fffff_fffff000))
+            Some(Frame::containing_address(
+                self.0 as usize & 0x000fffff_fffff000
+            ))
         } else {
             None
         }
@@ -47,18 +50,18 @@ bitflags! {
 
 impl EntryFlags {
     pub fn from_elf_section_flags(section: &ElfSection) -> EntryFlags {
-        use multiboot2::{ELF_SECTION_ALLOCATED, ELF_SECTION_WRITABLE, ELF_SECTION_EXECUTABLE};
+        use multiboot2::{ELF_SECTION_ALLOCATED, ELF_SECTION_WRITABLE,
+            ELF_SECTION_EXECUTABLE};
 
         let mut flags = EntryFlags::empty();
 
         if section.flags().contains(ELF_SECTION_ALLOCATED) {
+            // section is loaded to memory
             flags = flags | PRESENT;
         }
-
         if section.flags().contains(ELF_SECTION_WRITABLE) {
             flags = flags | WRITABLE;
         }
-
         if !section.flags().contains(ELF_SECTION_EXECUTABLE) {
             flags = flags | NO_EXECUTE;
         }

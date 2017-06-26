@@ -1,0 +1,2 @@
+[target.x86_64-kja_os.dependencies]
+alloc = {}

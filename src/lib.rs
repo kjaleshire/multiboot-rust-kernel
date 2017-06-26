@@ -1,9 +1,10 @@
-#![feature(alloc, asm, collections, const_fn, lang_items, naked_functions, step_by, unique)]
+#![feature(abi_x86_interrupt, alloc, const_fn, lang_items, unique)]
 #![no_std]
 
-extern crate bit_field;
 #[macro_use]
 extern crate bitflags;
+extern crate bit_field;
+extern crate hole_list_allocator;
 #[macro_use]
 extern crate lazy_static;
 extern crate multiboot2;
@@ -11,59 +12,48 @@ extern crate multiboot2;
 extern crate once;
 extern crate rlibc;
 extern crate spin;
-extern crate x86;
+extern crate volatile;
+extern crate x86_64;
 
 extern crate alloc;
-extern crate hole_list_allocator;
-#[macro_use]
-extern crate collections;
 
 #[macro_use]
 mod vga_buffer;
 mod interrupts;
 mod memory;
 
-#[naked]
 #[no_mangle]
-pub extern "C" fn rust_main(multiboot_information_address: usize) {
-    // Be careful, there is only a tiny stack and no guard page
+pub extern fn rust_main(multiboot_information_address: usize) {
+    // ATTENTION: we have a very small stack and no guard page
     vga_buffer::clear_screen();
-    println!("Hello world{}", "!");
+    println!("Hello World{}", "!");
 
-    let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
-
+    let boot_info = unsafe {
+        multiboot2::load(multiboot_information_address)
+    };
     enable_nxe_bit();
     enable_write_protect_bit();
 
-    memory::init(boot_info);
+    // set up guard page and map the heap pages
+    let mut memory_controller = memory::init(boot_info); // new return type
 
-    interrupts::init();
+    // initialize our IDT
+    interrupts::init(&mut memory_controller); // new argument
 
-    use alloc::boxed::Box;
-    let mut heap_test = Box::new(42);
-    *heap_test -= 15;
-
-    let heap_test2 = Box::new("hello");
-    println!("{:?} {:?}", heap_test, heap_test2);
-
-    let mut vec_test = vec![1, 2, 3, 4, 5, 6, 7];
-    vec_test[3] = 42;
-    for i in &vec_test {
-        print!("{} ", i);
+    fn stack_overflow() {
+        stack_overflow(); // for each recursion, the return address is pushed
     }
 
-    for _ in 0..10000 {
-        format!("Some String");
-    }
+    // trigger a stack overflow
+    stack_overflow();
 
-    println!("{:?}", divide_by_zero());
+    println!("It did not crash!");
 
-    println!("SUCCESS!");
     loop {}
 }
 
 fn enable_nxe_bit() {
-    use x86::msr::{IA32_EFER, rdmsr, wrmsr};
+    use x86_64::registers::msr::{IA32_EFER, rdmsr, wrmsr};
 
     let nxe_bit = 1 << 11;
     unsafe {
@@ -73,31 +63,18 @@ fn enable_nxe_bit() {
 }
 
 fn enable_write_protect_bit() {
-    use x86::controlregs::{cr0, cr0_write};
-    let wp_bit = 1 << 16;
-    unsafe { cr0_write(cr0() | wp_bit) };
+    use x86_64::registers::control_regs::{cr0, cr0_write, Cr0};
+
+    unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
 }
 
-fn divide_by_zero() {
-    unsafe {
-        asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel");
-    }
-}
+#[lang = "eh_personality"] extern fn eh_personality() {}
 
-#[cfg(not(test))]
-#[lang = "eh_personality"]
-extern "C" fn eh_personality() {}
-
-#[cfg(not(test))]
 #[lang = "panic_fmt"]
-extern "C" fn panic_fmt(fmt: core::fmt::Arguments, file: &str, line: u32) -> ! {
+#[no_mangle]
+pub extern fn panic_fmt(fmt: core::fmt::Arguments, file: &'static str,
+    line: u32) -> ! {
     println!("\n\nPANIC in {} at line {}:", file, line);
     println!("    {}", fmt);
-    loop {}
-}
-
-#[allow(non_snake_case)]
-#[no_mangle]
-pub extern "C" fn _Unwind_Resume() -> ! {
-    loop {}
+    loop{}
 }

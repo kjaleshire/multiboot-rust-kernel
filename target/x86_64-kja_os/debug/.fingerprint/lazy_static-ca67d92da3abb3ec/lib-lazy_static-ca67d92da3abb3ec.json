@@ -1,0 +1,1 @@
+{"rustc":1853113509016406146,"features":"[\"nightly\", \"spin\", \"spin_no_std\"]","target":5629277998040881556,"profile":731176819336294830,"deps":[["spin v0.4.5",6905349338178203518]],"local":{"Precalculated":"0.2.8"},"rustflags":["--sysroot","/home/kja/.xargo"]}
